@@ -15,6 +15,13 @@ func allBlocks(allBlocks []blocks.RawBlock) []blocks.Block {
 
 func parseBlock(block blocks.RawBlock) blocks.Block {
 	switch block.Type {
+	case "logic_boolean":
+		return blocks.LogicBoolean{RawBlock: block, Value: block.SingleField() == "TRUE"}
+	case "logic_negate":
+		return blocks.LogicNot{RawBlock: block, Value: parseBlock(block.SingleValue())}
+	case "logic_compare", "logic_operation":
+		return logicExpr(block)
+
 	case "math_number":
 		return blocks.MathNumber{RawBlock: block, Value: block.SingleField()}
 	case "math_add":
@@ -59,6 +66,27 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return mathConvertNumber(block)
 	default:
 		panic("Unsupported block type: " + block.Type)
+	}
+}
+
+func logicExpr(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "EQ":
+		pOperation = "=="
+	case "NEQ":
+		pOperation = "!="
+	case "AND":
+		pOperation = "&&"
+	case "OR":
+		pOperation = "||"
+	default:
+		panic("Unknown Logic Compare operation: " + block.SingleField())
+	}
+	return blocks.LogicExpr{
+		RawBlock: blocks.RawBlock{},
+		Operator: pOperation,
+		Operands: fromValues(block.Values),
 	}
 }
 

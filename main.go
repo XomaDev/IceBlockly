@@ -9,7 +9,7 @@ import (
 
 func main() {
 	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="math_convert_number"><field name="OP">DEC_TO_HEX</field><value name="NUM"><block type="math_number"><field name="NUM">8</field></block></value></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="logic_operation"><mutation xmlns="http://www.w3.org/1999/xhtml" items="2"></mutation><field name="OP">OR</field><value name="A"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></value><value name="B"><block type="logic_boolean"><field name="BOOL">FALSE</field></block></value></block></xml>
 `
 
 	decoder := xml.NewDecoder(strings.NewReader(input))
