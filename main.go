@@ -9,7 +9,7 @@ import (
 
 func main() {
 	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="text_replace_mappings"><field name="OP">LONGEST_STRING_FIRST</field><value name="MAPPINGS"><block type="dictionaries_create_with"><mutation xmlns="http://www.w3.org/1999/xhtml" items="0"></mutation></block></value><value name="TEXT"><block type="text"><field name="TEXT">Hello, World!</field></block></value></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="lists_slice"><value name="LIST"><block type="lists_create_with"><mutation xmlns="http://www.w3.org/1999/xhtml" items="3"></mutation><value name="ADD0"><block type="math_number"><field name="NUM">1</field></block></value><value name="ADD1"><block type="math_number"><field name="NUM">2</field></block></value><value name="ADD2"><block type="math_number"><field name="NUM">3</field></block></value></block></value><value name="INDEX1"><block type="math_number"><field name="NUM">2</field></block></value><value name="INDEX2"><block type="math_number"><field name="NUM">4</field></block></value></block></xml>
 `
 
 	decoder := xml.NewDecoder(strings.NewReader(input))

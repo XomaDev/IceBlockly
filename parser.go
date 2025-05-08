@@ -2,6 +2,7 @@ package main
 
 import (
 	"IceBlockly/blocks"
+	"strconv"
 	"strings"
 )
 
@@ -35,6 +36,8 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 
 	case "math_number":
 		return blocks.MathNumber{RawBlock: block, Value: block.SingleField()}
+	case "math_compare":
+		return mathCompare(block)
 	case "math_add":
 		return blocks.MathExpr{Operator: "+", Operands: fromValues(block.Values)}
 	case "math_subtract":
@@ -113,6 +116,68 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 
 	case "lists_create_with":
 		return blocks.MakeList{RawBlock: block, Elements: fromValues(block.Values)}
+	case "lists_add_items":
+		return listAddItem(block)
+	case "lists_is_in":
+		return listContainsItem(block)
+	case "lists_length":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "size"}
+	case "lists_is_empty":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "isEmpty"}
+	case "lists_pick_random_item":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "random"}
+	case "lists_position_in":
+		return listIndexOf(block)
+	case "lists_select_item":
+		return listSelectItem(block)
+	case "lists_insert_item":
+		return listInsertItem(block)
+	case "lists_replace_item":
+		return listReplaceItem(block)
+	case "lists_remove_item":
+		return listRemoveItem(block)
+	case "lists_append_list":
+		return listAppendList(block)
+	case "lists_copy":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "copy"}
+	case "lists_reverse":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "reverse"}
+	case "lists_to_csv_row":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "toCsvRow"}
+	case "lists_to_csv_table":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "toCsvTable"}
+	case "lists_sort":
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "sort"}
+	case "lists_is_list":
+		return blocks.ListFunction{RawBlock: block, Function: "isList", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "lists_from_csv_row":
+		return blocks.ListFunction{RawBlock: block, Function: "listFromCsvRow", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "lists_from_csv_table":
+		return blocks.ListFunction{RawBlock: block, Function: "listFromCsvTable", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "lists_but_first":
+		return blocks.ListFunction{RawBlock: block, Function: "exceptFirst", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "lists_but_last":
+		return blocks.ListFunction{RawBlock: block, Function: "exceptLast", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "lists_lookup_in_pairs":
+		return listLookupPairs(block)
+	case "lists_join_with_separator":
+		return listJoin(block)
+	case "lists_slice":
+		return listSlice(block)
+	case "lists_map":
+		return listMap(block)
+	case "lists_filter":
+		return listFilter(block)
+	case "lists_reduce":
+		return listReduce(block)
+	case "lists_sort_comparator":
+		return listSortComparator(block)
+	case "lists_sort_key":
+		return listSortKeyComparator(block)
+	case "lists_minimum_value":
+		return listTransMin(block)
+	case "lists_maximum_value":
+		return listTransMax(block)
 
 	case "pair":
 		return dictPair(block)
@@ -120,6 +185,200 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return blocks.MakeDict{RawBlock: block, Pairs: fromValues(block.Values)}
 	default:
 		panic("Unsupported block type: " + block.Type)
+	}
+}
+
+func listSlice(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "slice",
+		Args:      []blocks.Block{pVals["INDEX1"], pVals["INDEX2"]},
+	}
+}
+
+func listTransMax(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	pFields := makeFieldMap(block.Fields)
+	return blocks.ListTransMax{
+		RawBlock:       block,
+		List:           pVals["LIST"],
+		FirstItemName:  pFields["VAR1"],
+		SecondItemName: pFields["VAR2"],
+		TestExpr:       pVals["COMPARE"],
+	}
+}
+
+func listTransMin(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	pFields := makeFieldMap(block.Fields)
+	return blocks.ListTransMin{
+		RawBlock:       block,
+		List:           pVals["LIST"],
+		FirstItemName:  pFields["VAR1"],
+		SecondItemName: pFields["VAR2"],
+		TestExpr:       pVals["COMPARE"],
+	}
+}
+
+func listSortKeyComparator(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListSortKey{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		KeyName:   block.SingleField(),
+		ApplyExpr: pVals["KEY"],
+	}
+}
+
+func listSortComparator(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	pFields := makeFieldMap(block.Fields)
+	return blocks.ListSort{
+		RawBlock:       block,
+		List:           pVals["LIST"],
+		FirstItemName:  pFields["VAR1"],
+		SecondItemName: pFields["VAR2"],
+		TestExpr:       pVals["COMPARE"],
+	}
+}
+
+func listReduce(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	pFields := makeFieldMap(block.Fields)
+	return blocks.ListReduce{
+		RawBlock:     block,
+		List:         pVals["LIST"],
+		ItemName:     pFields["VAR1"],
+		AnsSoFarName: pFields["VAR2"],
+		InitExpr:     pVals["INITANSWER"],
+		ApplyExpr:    pVals["COMBINE"],
+	}
+}
+
+func listFilter(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListFilter{
+		RawBlock: block,
+		List:     pVals["LIST"],
+		AsName:   block.SingleField(),
+		Test:     pVals["TEST"],
+	}
+}
+
+func listMap(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMap{
+		RawBlock: block,
+		List:     pVals["LIST"],
+		AsName:   block.SingleField(),
+		To:       pVals["TO"],
+	}
+}
+
+func listJoin(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "join",
+		Args:      []blocks.Block{pVals["SEPARATOR"]},
+	}
+}
+
+func listLookupPairs(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "lookup",
+		Args:      []blocks.Block{pVals["KEY"], pVals["NOTFOUND"]},
+	}
+}
+
+func listAppendList(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST0"],
+		Operation: "append",
+		Args:      []blocks.Block{pVals["LIST1"]},
+	}
+}
+
+func listRemoveItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "remove",
+		Args:      []blocks.Block{pVals["INDEX"]},
+	}
+}
+
+func listReplaceItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListSet{
+		RawBlock: block,
+		List:     pVals["LIST"],
+		Index:    pVals["NUM"],
+		Element:  pVals["ITEM"],
+	}
+}
+
+func listInsertItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "insert",
+		Args:      []blocks.Block{pVals["INDEX"], pVals["ITEM"]},
+	}
+}
+
+func listSelectItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListGet{
+		RawBlock: block,
+		List:     pVals["LIST"],
+		Index:    pVals["NUM"],
+	}
+}
+
+func listIndexOf(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "indexOf",
+		Args:      []blocks.Block{pVals["ITEM"]},
+	}
+}
+
+func listContainsItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "contains",
+		Args:      []blocks.Block{pVals["ITEM"]},
+	}
+}
+
+func listAddItem(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	numElements := block.Mutation.ItemCount
+	arrElements := make([]blocks.Block, numElements)
+
+	for i := 0; i < numElements; i++ {
+		arrElements[i] = pVals["ITEM"+strconv.Itoa(i)]
+	}
+	return blocks.ListMethod{
+		RawBlock:  block,
+		List:      pVals["LIST"],
+		Operation: "add",
+		Args:      arrElements,
 	}
 }
 
@@ -402,6 +661,27 @@ func mathBitwise(block blocks.RawBlock, operands []blocks.Block) blocks.Block {
 func mathRandom(block blocks.RawBlock) blocks.Block {
 	valMap := makeValueMap(block.Values)
 	return blocks.MathRandomInt{RawBlock: block, From: valMap["FROM"], To: valMap["TO"]}
+}
+
+func mathCompare(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "EQ":
+		pOperation = "=="
+	case "NEQ":
+		pOperation = "!="
+	case "LT":
+		pOperation = "<"
+	case "LTE":
+		pOperation = "<="
+	case "GT":
+		pOperation = ">"
+	case "GTE":
+		pOperation = ">="
+	default:
+		panic("Unsupported MathCompare operation: " + block.SingleField())
+	}
+	return blocks.MathExpr{RawBlock: block, Operator: pOperation, Operands: fromValues(block.Values)}
 }
 
 func makeFieldMap(allFields []blocks.Field) map[string]string {

@@ -26,7 +26,11 @@ func (t TextMethod) String() string {
 }
 
 func (t TextSegment) String() string {
-	return fmt.Sprintf("%v[%v:%v]", t.Text, t.Start, t.Length)
+	pFormat := "%v[%v:%v]"
+	if !t.Text.Continuous() {
+		pFormat = "(%v)[%v:%v]"
+	}
+	return fmt.Sprintf(pFormat, t.Text, t.Start, t.Length)
 }
 
 func (t TextObfuscate) String() string {

@@ -17,10 +17,11 @@ type XmlRoot struct {
 }
 
 type RawBlock struct {
-	XMLName xml.Name `xml:"block"`
-	Type    string   `xml:"type,attr"`
-	Fields  []Field  `xml:"field"`
-	Values  []Value  `xml:"value"`
+	XMLName  xml.Name `xml:"block"`
+	Type     string   `xml:"type,attr"`
+	Fields   []Field  `xml:"field"`
+	Values   []Value  `xml:"value"`
+	Mutation Mutation `xml:"mutation"`
 }
 
 type Field struct {
@@ -32,6 +33,11 @@ type Value struct {
 	XMLName xml.Name `xml:"value"`
 	Name    string   `xml:"name,attr"`
 	Block   RawBlock `xml:"block"`
+}
+
+type Mutation struct {
+	XMLName   xml.Name `xml:"mutation"`
+	ItemCount int      `xml:"items,attr"`
 }
 
 type EmptyBlock struct {
@@ -56,6 +62,10 @@ func (r RawBlock) String() string {
 
 func (r RawBlock) Continuous() bool {
 	return true
+}
+
+func Pad(block Block) string {
+	return " " + strings.Replace(block.String(), "\n", "\n  ", -1) + "\n"
 }
 
 func JoinBlocks(blocks []Block, delimiter string) string {
