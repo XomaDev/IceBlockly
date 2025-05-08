@@ -1,6 +1,9 @@
 package blocks
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"strings"
+)
 
 type Block interface {
 	GetType() string
@@ -15,8 +18,13 @@ type XmlRoot struct {
 type RawBlock struct {
 	XMLName xml.Name `xml:"block"`
 	Type    string   `xml:"type,attr"`
-	Field   string   `xml:"field"`
+	Fields  []Field  `xml:"field"`
 	Values  []Value  `xml:"value"`
+}
+
+type Field struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:",chardata"`
 }
 
 type Value struct {
@@ -25,14 +33,30 @@ type Value struct {
 	Block   RawBlock `xml:"block"`
 }
 
+type EmptyBlock struct {
+	RawBlock
+}
+
 func (r RawBlock) GetType() string {
 	return r.Type
+}
+
+func (r RawBlock) SingleValue() RawBlock {
+	return r.Values[0].Block
+}
+
+func (r RawBlock) SingleField() string {
+	return r.Fields[0].Value
 }
 
 func (r RawBlock) String() string {
 	return "<" + r.Type + ">"
 }
 
-type EmptyBlock struct {
-	RawBlock
+func JoinBlocks(blocks []Block, delimiter string) string {
+	opStrings := make([]string, len(blocks))
+	for i, op := range blocks {
+		opStrings[i] = op.String()
+	}
+	return strings.Join(opStrings, delimiter)
 }

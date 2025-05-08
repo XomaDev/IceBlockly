@@ -20,3 +20,20 @@ type MathRandomInt struct {
 type MathRandomFloat struct {
 	RawBlock
 }
+
+type MathRandomSetSeed struct {
+	RawBlock
+	Seed Block
+}
+
+type MathRadix struct {
+	RawBlock
+	Radix  int
+	Number string
+}
+
+type MathFunc struct {
+	RawBlock
+	Operation string
+	Operands  []Block
+}
