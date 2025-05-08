@@ -13,6 +13,17 @@ func allBlocks(allBlocks []blocks.RawBlock) []blocks.Block {
 	return parsedBlocks
 }
 
+// TODO (future):
+//  * when two Ints are TextJoined, we'd produce `123 + 123`
+//    which is an arithmetic operation.
+//    ==Solution==:
+//    > While Blockly -> Mist
+//      If any of the operands resolves to a String, keep as it is
+//      If none of the operands resolve to a String, add a toString() wrapper call
+//    > While Mist -> Blockly
+//      We'd decide if the '+' means TextJoin or Arithmetic Add by looking
+//      into the possible resolved types. If there's a string resolved, it's a TextJoin
+
 func parseBlock(block blocks.RawBlock) blocks.Block {
 	switch block.Type {
 	case "logic_boolean":
@@ -64,9 +75,182 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return mathIsNumber(block)
 	case "math_convert_number":
 		return mathConvertNumber(block)
+
+	case "text":
+		return blocks.TextString{RawBlock: block, Text: block.SingleField()}
+	case "text_join":
+		return blocks.TextExpr{RawBlock: block, Operation: "+", Operands: fromValues(block.Values)}
+	case "text_length":
+		return blocks.TextProperty{RawBlock: block, Property: "len", Text: parseBlock(block.SingleValue())}
+	case "text_isEmpty":
+		return blocks.TextProperty{RawBlock: block, Property: "isEmpty", Text: parseBlock(block.SingleValue())}
+	case "text_trim":
+		return blocks.TextProperty{RawBlock: block, Property: "trim", Text: parseBlock(block.SingleValue())}
+	case "text_reverse":
+		return blocks.TextProperty{RawBlock: block, Property: "reverse", Text: parseBlock(block.SingleValue())}
+	case "text_split_at_spaces":
+		return blocks.TextProperty{RawBlock: block, Property: "splitAtSpaces", Text: parseBlock(block.SingleValue())}
+	case "text_compare":
+		return textCompare(block)
+	case "text_changeCase":
+		return textChangeCase(block)
+	case "text_starts_at":
+		return textStartsWith(block)
+	case "text_contains":
+		return textContains(block)
+	case "text_split":
+		return textSplit(block)
+	case "text_segment":
+		return textSegment(block)
+	case "text_replace_all":
+		return textReplace(block)
+	case "obfuscated_text":
+		return blocks.TextObfuscate{RawBlock: block, Text: block.SingleField()}
+	case "text_is_string":
+		return blocks.TextIsString{RawBlock: block, Value: parseBlock(block.SingleValue())}
+	case "text_replace_mappings":
+		return textReplaceMap(block)
+
+	case "lists_create_with":
+		return blocks.MakeList{RawBlock: block, Elements: fromValues(block.Values)}
+
+	case "pair":
+		return dictPair(block)
+	case "dictionaries_create_with":
+		return blocks.MakeDict{RawBlock: block, Pairs: fromValues(block.Values)}
 	default:
 		panic("Unsupported block type: " + block.Type)
 	}
+}
+
+func dictPair(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.Pair{
+		RawBlock: block,
+		Key:      pVals["KEY"],
+		Value:    pVals["VALUE"],
+	}
+}
+
+func textReplaceMap(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "LONGEST_STRING_FIRST":
+		pOperation = "replaceMapLongestFirst"
+	case "DICTIONARY_ORDER":
+		pOperation = "replaceMap"
+	}
+	pVals := makeValueMap(block.Values)
+	return blocks.TextMethod{
+		RawBlock: block,
+		Method:   pOperation,
+		Text:     pVals["TEXT"],
+		Args:     []blocks.Block{pVals["MAPPINGS"]},
+	}
+}
+
+func textReplace(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.TextMethod{
+		RawBlock: block,
+		Method:   "replace",
+		Text:     pVals["TEXT"],
+		Args:     []blocks.Block{pVals["SEGMENT"], pVals["REPLACEMENT"]},
+	}
+}
+
+func textSegment(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.TextSegment{
+		RawBlock: block,
+		Text:     pVals["TEXT"],
+		Start:    pVals["START"],
+		Length:   pVals["LENGTH"],
+	}
+}
+
+func textSplit(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	var pOperation string
+	switch block.SingleField() {
+	case "SPLIT":
+		pOperation = "split"
+	case "SPLITATFIRST":
+		pOperation = "splitFirst"
+	case "SPLITATANY":
+		pOperation = "splitAny"
+	case "SPLITATFIRSTOFANY":
+		pOperation = "splitFirstOfAny"
+	default:
+		panic("Unsupported TextSplit block operation: " + block.SingleField())
+	}
+	return blocks.TextMethod{
+		RawBlock: block,
+		Method:   pOperation,
+		Text:     pVals["TEXT"],
+		Args:     []blocks.Block{pVals["AT"]},
+	}
+}
+
+func textContains(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	var pOperation string
+	switch block.SingleField() {
+	case "CONTAINS":
+		pOperation = "contains"
+	case "CONTAINS_ANY":
+		pOperation = "containsAny"
+	case "CONTAINS_ALL":
+		pOperation = "containsAll"
+	default:
+		panic("Unsupported TextContains operation: " + block.SingleField())
+	}
+	return blocks.TextMethod{
+		RawBlock: block,
+		Method:   pOperation,
+		Text:     pVals["TEXT"],
+		Args:     []blocks.Block{pVals["PIECE"]},
+	}
+}
+
+func textStartsWith(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.TextMethod{
+		RawBlock: block,
+		Method:   "startsWith",
+		Text:     pVals["TEXT"],
+		Args:     []blocks.Block{pVals["PIECE"]},
+	}
+}
+
+func textChangeCase(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "UPCASE":
+		pOperation = "upper"
+	case "DOWNCASE":
+		pOperation = "lower"
+	default:
+		panic("Unsupported TextChangeCase operation type: " + block.SingleField())
+	}
+	return blocks.TextProperty{RawBlock: block, Property: pOperation, Text: parseBlock(block.SingleValue())}
+}
+
+func textCompare(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "EQ":
+		pOperation = "==="
+	case "NEQ":
+		pOperation = "!=="
+	case "LT":
+		pOperation = "<<"
+	case "RT":
+		pOperation = ">>"
+	default:
+		panic("Unknown Text Compare operation: " + block.SingleField())
+	}
+	return blocks.TextExpr{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
 }
 
 func logicExpr(block blocks.RawBlock) blocks.Block {

@@ -11,6 +11,10 @@ type MathExpr struct {
 	Operands []Block
 }
 
+func (m MathExpr) Continuous() bool {
+	return false
+}
+
 type MathRandomInt struct {
 	RawBlock
 	From Block

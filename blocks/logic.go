@@ -15,3 +15,7 @@ type LogicExpr struct {
 	Operator string
 	Operands []Block
 }
+
+func (l LogicExpr) Continuous() bool {
+	return false
+}

@@ -1,10 +1,9 @@
 package blocks
 
+import "fmt"
+
 func (l LogicBoolean) String() string {
-	if l.Value {
-		return "true"
-	}
-	return "false"
+	return fmt.Sprintf("%t", l.Value)
 }
 
 func (l LogicNot) String() string {

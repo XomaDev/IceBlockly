@@ -9,7 +9,7 @@ import (
 
 func main() {
 	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="logic_operation"><mutation xmlns="http://www.w3.org/1999/xhtml" items="2"></mutation><field name="OP">OR</field><value name="A"><block type="logic_boolean"><field name="BOOL">TRUE</field></block></value><value name="B"><block type="logic_boolean"><field name="BOOL">FALSE</field></block></value></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="text_replace_mappings"><field name="OP">LONGEST_STRING_FIRST</field><value name="MAPPINGS"><block type="dictionaries_create_with"><mutation xmlns="http://www.w3.org/1999/xhtml" items="0"></mutation></block></value><value name="TEXT"><block type="text"><field name="TEXT">Hello, World!</field></block></value></block></xml>
 `
 
 	decoder := xml.NewDecoder(strings.NewReader(input))
@@ -23,5 +23,7 @@ func main() {
 
 	parsedBlocks := allBlocks(root.Blocks)
 
-	fmt.Println(parsedBlocks)
+	for i := range parsedBlocks {
+		fmt.Println(parsedBlocks[i])
+	}
 }

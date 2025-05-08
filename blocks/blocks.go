@@ -8,6 +8,7 @@ import (
 type Block interface {
 	GetType() string
 	String() string
+	Continuous() bool
 }
 
 type XmlRoot struct {
@@ -51,6 +52,10 @@ func (r RawBlock) SingleField() string {
 
 func (r RawBlock) String() string {
 	return "<" + r.Type + ">"
+}
+
+func (r RawBlock) Continuous() bool {
+	return true
 }
 
 func JoinBlocks(blocks []Block, delimiter string) string {
