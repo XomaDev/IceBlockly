@@ -17,11 +17,13 @@ type XmlRoot struct {
 }
 
 type RawBlock struct {
-	XMLName  xml.Name `xml:"block"`
-	Type     string   `xml:"type,attr"`
-	Fields   []Field  `xml:"field"`
-	Values   []Value  `xml:"value"`
-	Mutation Mutation `xml:"mutation"`
+	XMLName   xml.Name  `xml:"block"`
+	Type      string    `xml:"type,attr"`
+	Fields    []Field   `xml:"field"`
+	Values    []Value   `xml:"value"`
+	Mutation  Mutation  `xml:"mutation"`
+	Statement Statement `xml:"statement"`
+	Next      *Next     `xml:"next"`
 }
 
 type Field struct {
@@ -36,8 +38,24 @@ type Value struct {
 }
 
 type Mutation struct {
-	XMLName   xml.Name `xml:"mutation"`
-	ItemCount int      `xml:"items,attr"`
+	XMLName    xml.Name    `xml:"mutation"`
+	ItemCount  int         `xml:"items,attr"`
+	LocalNames []LocalName `xml:"localname"`
+}
+
+type LocalName struct {
+	XMLName xml.Name `xml:"localname"`
+	Name    string   `xml:"name,attr"`
+}
+
+type Statement struct {
+	XMLName xml.Name  `xml:"statement"`
+	Block   *RawBlock `xml:"block"`
+}
+
+type Next struct {
+	XMLName xml.Name  `xml:"next"`
+	Block   *RawBlock `xml:"block"`
 }
 
 type EmptyBlock struct {

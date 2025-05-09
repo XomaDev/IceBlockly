@@ -2,9 +2,26 @@ package main
 
 import (
 	"IceBlockly/blocks"
+	"encoding/xml"
 	"strconv"
 	"strings"
 )
+
+func ParseBlockly(xmlContent string) []blocks.Block {
+	return allBlocks(parseXml(xmlContent))
+}
+
+func parseXml(xmlContent string) []blocks.RawBlock {
+	decoder := xml.NewDecoder(strings.NewReader(xmlContent))
+	decoder.Strict = false
+	decoder.DefaultSpace = ""
+
+	var root blocks.XmlRoot
+	if err := decoder.Decode(&root); err != nil {
+		panic(err)
+	}
+	return root.Blocks
+}
 
 func allBlocks(allBlocks []blocks.RawBlock) []blocks.Block {
 	var parsedBlocks []blocks.Block
@@ -242,9 +259,67 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return blocks.MakeColor{RawBlock: block, List: parseBlock(block.SingleValue())}
 	case "color_split_color":
 		return blocks.SplitColor{RawBlock: block, Color: parseBlock(block.SingleValue())}
+
+	case "global_declaration":
+		return blocks.GlobalVar{RawBlock: block, Name: block.SingleField(), Value: parseBlock(block.SingleValue())}
+	case "lexical_variable_get":
+		return variableGet(block)
+	case "lexical_variable_set":
+		return variableSet(block)
+	case "local_declaration_statement", "local_declaration_expression":
+		return variableSmts(block)
 	default:
 		panic("Unsupported block type: " + block.Type)
 	}
+}
+
+func variableSmts(block blocks.RawBlock) blocks.Block {
+	numOfVars := len(block.Mutation.LocalNames)
+	fieldMap := makeFieldMap(block.Fields)
+	valueMap := makeValueMap(block.Values)
+
+	varNames := make([]string, numOfVars)
+	varValues := make([]blocks.Block, numOfVars)
+
+	for i := 0; i < numOfVars; i++ {
+		varNames[i] = fieldMap["VAR"+strconv.Itoa(i)]
+		varValues[i] = valueMap["DECL"+strconv.Itoa(i)]
+	}
+	if block.GetType() == "local_declaration_statement" {
+		return blocks.VarBody{
+			RawBlock:  block,
+			VarNames:  varNames,
+			VarValues: varValues,
+			Body:      recursiveParse(*block.Statement.Block),
+		}
+	}
+	return blocks.VarResult{
+		RawBlock:  block,
+		VarNames:  varNames,
+		VarValues: varValues,
+		Result:    valueMap["RETURN"],
+	}
+}
+
+func variableSet(block blocks.RawBlock) blocks.Block {
+	varName := block.SingleField()
+	isGlobal := strings.HasPrefix(varName, "global ")
+	if isGlobal {
+		varName = varName[len("global "):]
+	}
+	return blocks.VarSet{RawBlock: block, Global: isGlobal, Name: varName, Value: parseBlock(block.SingleValue())}
+}
+
+func variableGet(block blocks.RawBlock) blocks.Block {
+	varName := block.Fields[0].Name
+	if varName == "VAR" {
+		varName = block.SingleField()
+	}
+	isGlobal := strings.HasPrefix(varName, "global ")
+	if isGlobal {
+		varName = varName[len("global "):]
+	}
+	return blocks.VarGet{RawBlock: block, Global: isGlobal, Name: varName}
 }
 
 func dictWalkTree(block blocks.RawBlock) blocks.Block {
@@ -838,6 +913,18 @@ func mathCompare(block blocks.RawBlock) blocks.Block {
 		panic("Unsupported MathCompare operation: " + block.SingleField())
 	}
 	return blocks.MathExpr{RawBlock: block, Operator: pOperation, Operands: fromValues(block.Values)}
+}
+
+func recursiveParse(currBlock blocks.RawBlock) []blocks.Block {
+	var pParsed []blocks.Block
+	for {
+		pParsed = append(pParsed, parseBlock(currBlock))
+		if currBlock.Next == nil {
+			break
+		}
+		currBlock = *currBlock.Next.Block
+	}
+	return pParsed
 }
 
 func makeFieldMap(allFields []blocks.Field) map[string]string {
