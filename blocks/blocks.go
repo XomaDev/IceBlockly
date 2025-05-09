@@ -38,11 +38,17 @@ type Value struct {
 }
 
 type Mutation struct {
-	XMLName    xml.Name    `xml:"mutation"`
-	ItemCount  int         `xml:"items,attr"`
-	LocalNames []LocalName `xml:"localname"`
-	Args       []Arg       `xml:"arg"`
-	Key        string      `xml:"key,attr"`
+	XMLName       xml.Name    `xml:"mutation"`
+	ItemCount     int         `xml:"items,attr"`
+	LocalNames    []LocalName `xml:"localname"`
+	Args          []Arg       `xml:"arg"`
+	Key           string      `xml:"key,attr"`
+	SetOrGet      string      `xml:"set_or_get,attr"`
+	IsGeneric     bool        `xml:"is_generic,attr"`
+	ComponentType string      `xml:"component_type,attr"`
+	InstanceName  string      `xml:"instance_name,attr"`
+	EventName     string      `xml:"event_name,attr"`
+	MethodName    string      `xml:"method_name,attr"`
 }
 
 type LocalName struct {

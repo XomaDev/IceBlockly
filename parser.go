@@ -329,8 +329,101 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return blocks.TextString{RawBlock: block, Text: block.SingleField()}
 	case "helpers_dropdown":
 		return blocks.HelperDropdown{RawBlock: block, Key: block.Mutation.Key, Option: block.SingleField()}
+
+	case "component_component_block":
+		return blocks.Component{RawBlock: block, Name: block.SingleField()}
+	case "component_set_get":
+		return propSetGet(block)
+	case "component_event":
+		return event(block)
+	case "component_method":
+		return method(block)
+	case "component_all_component_block":
+		return blocks.AllComponent{RawBlock: block, Type: block.Mutation.ComponentType}
 	default:
 		panic("Unsupported block type: " + block.Type)
+	}
+}
+
+func method(block blocks.RawBlock) blocks.Block {
+	if block.Mutation.IsGeneric {
+		pVals := makeValueMap(block.Values)
+		var callArgs []blocks.Block
+
+		for i := 0; ; i++ {
+			aArg := pVals["ARG"+strconv.Itoa(i)]
+			if aArg == nil {
+				break
+			}
+			callArgs = append(callArgs, aArg)
+		}
+
+		return blocks.GenericMethodCall{
+			RawBlock:  block,
+			Component: pVals["COMPONENT"],
+			Method:    block.Mutation.MethodName,
+			Args:      callArgs,
+		}
+	}
+	return blocks.MethodCall{
+		RawBlock:  block,
+		Component: block.Mutation.InstanceName,
+		Method:    block.Mutation.MethodName,
+		Args:      fromValues(block.Values),
+	}
+}
+
+func event(block blocks.RawBlock) blocks.Block {
+	var component string
+	if block.Mutation.IsGeneric {
+		component = block.Mutation.ComponentType
+	} else {
+		component = block.Mutation.InstanceName
+	}
+	return blocks.Event{
+		IsGeneric:  block.Mutation.IsGeneric,
+		RawBlock:   block,
+		Component:  component,
+		Event:      block.Mutation.EventName,
+		Parameters: nil, // TODO ( fix 'em later )
+		Body:       recursiveParse(*block.SingleStatement().Block),
+	}
+}
+
+func propSetGet(block blocks.RawBlock) blocks.Block {
+	pFields := makeFieldMap(block.Fields)
+
+	property := pFields["PROP"]
+	isSet := block.Mutation.SetOrGet == "set"
+
+	if block.Mutation.IsGeneric {
+		pVals := makeValueMap(block.Values)
+		if isSet {
+			return blocks.GenericPropertySet{
+				RawBlock:  block,
+				Component: pVals["COMPONENT"],
+				Property:  property,
+				Value:     pVals["VALUE"],
+			}
+		}
+		return blocks.GenericPropertyGet{
+			RawBlock:  block,
+			Component: pVals["COMPONENT"],
+			Property:  property,
+		}
+	}
+	if isSet {
+		return blocks.PropertySet{
+			RawBlock:  block,
+			Component: pFields["COMPONENT_SELECTOR"],
+			Property:  property,
+			Value:     parseBlock(block.SingleValue()),
+		}
+	}
+	return blocks.PropertyGet{
+		RawBlock:  block,
+		Component: pFields["COMPONENT_SELECTOR"],
+		Property:  property,
 	}
 }
 
