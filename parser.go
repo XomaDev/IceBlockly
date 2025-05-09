@@ -44,7 +44,56 @@ func allBlocks(allBlocks []blocks.RawBlock) []blocks.Block {
 
 func parseBlock(block blocks.RawBlock) blocks.Block {
 	switch block.Type {
-	case "logic_boolean":
+	case "controls_if":
+		return blocks.CtrlIf{RawBlock: block, Conditions: fromValues(block.Values), Bodies: fromStatements(block.Statements)}
+	case "controls_forRange":
+		return ctrlForRange(block)
+	case "controls_forEach":
+		return blocks.CtrlForEach{
+			RawBlock: block,
+			VarName:  block.SingleField(),
+			List:     parseBlock(block.SingleValue()),
+			Body:     recursiveParse(*block.SingleStatement().Block)}
+	case "controls_for_each_dict":
+		return ctrlForEachDict(block)
+	case "controls_while":
+		return blocks.CtrlWhile{
+			RawBlock:  block,
+			Condition: parseBlock(block.SingleValue()),
+			Body:      recursiveParse(*block.SingleStatement().Block)}
+	case "controls_choose":
+		return ctrlChoose(block)
+	case "controls_do_then_return":
+		return blocks.CtrlDo{
+			RawBlock: block,
+			Body:     recursiveParse(*block.SingleStatement().Block),
+			Result:   parseBlock(block.SingleValue()),
+		}
+	case "controls_eval_but_ignore":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "println", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "controls_openAnotherScreen":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "openScreen", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "controls_openAnotherScreenWithStartValue":
+		return ctrlOpenScreenValue(block)
+	case "controls_getStartValue":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "getStartValue"}
+	case "controls_closeScreen":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "closeScreen"}
+	case "controls_closeScreenWithValue":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "closeScreenWithValue", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+	case "controls_closeApplication":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "closeApp"}
+	case "controls_getPlainStartText":
+		return blocks.CtrlMethod{RawBlock: block, Operation: "getPlainStartValue"}
+	case "controls_closeScreenWithPlainText":
+		return blocks.CtrlMethod{
+			RawBlock:  block,
+			Operation: "closeScreenWithPlainText",
+			Args:      []blocks.Block{parseBlock(block.SingleValue())}}
+	case "controls_break":
+		return blocks.CtrlBreak{RawBlock: block}
+
+	case "logic_boolean", "logic_true", "logic_false":
 		return blocks.LogicBoolean{RawBlock: block, Value: block.SingleField() == "TRUE"}
 	case "logic_negate":
 		return blocks.LogicNot{RawBlock: block, Value: parseBlock(block.SingleValue())}
@@ -280,6 +329,48 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	}
 }
 
+func ctrlOpenScreenValue(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.CtrlMethod{
+		RawBlock:  block,
+		Operation: "openScreenWithValue",
+		Args:      []blocks.Block{pVals["SCREENNAME"], pVals["STARTVALUE"]},
+	}
+}
+
+func ctrlChoose(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.CtrlChoose{
+		RawBlock:  block,
+		Condition: pVals["TEST"],
+		Then:      pVals["THENRETURN"],
+		Else:      pVals["ELSERETURN"],
+	}
+}
+
+func ctrlForEachDict(block blocks.RawBlock) blocks.Block {
+	pFields := makeFieldMap(block.Fields)
+	return blocks.CtrlForEachDict{
+		RawBlock:  block,
+		KeyName:   pFields["KEY"],
+		ValueName: pFields["VALUE"],
+		Dict:      parseBlock(block.SingleValue()),
+		Body:      recursiveParse(*block.SingleStatement().Block),
+	}
+}
+
+func ctrlForRange(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.CtrlForRange{
+		RawBlock: block,
+		VarName:  block.SingleField(),
+		Start:    pVals["START"],
+		End:      pVals["END"],
+		Step:     pVals["STEP"],
+		Body:     recursiveParse(*block.SingleStatement().Block),
+	}
+}
+
 func procedureCall(block blocks.RawBlock) blocks.Block {
 	mutArgsNames := block.Mutation.Args
 	paramNames := make([]string, len(mutArgsNames))
@@ -322,7 +413,7 @@ func voidProcedure(block blocks.RawBlock) blocks.Block {
 		RawBlock:   block,
 		Name:       procedureName,
 		Parameters: paramNames,
-		Body:       recursiveParse(*block.Statement.Block),
+		Body:       recursiveParse(*block.SingleStatement().Block),
 	}
 }
 
@@ -343,7 +434,7 @@ func variableSmts(block blocks.RawBlock) blocks.Block {
 			RawBlock:  block,
 			VarNames:  varNames,
 			VarValues: varValues,
-			Body:      recursiveParse(*block.Statement.Block),
+			Body:      recursiveParse(*block.SingleStatement().Block),
 		}
 	}
 	return blocks.VarResult{
@@ -994,6 +1085,14 @@ func makeValueMap(allValues []blocks.Value) map[string]blocks.Block {
 		valueMap[val.Name] = parseBlock(val.Block)
 	}
 	return valueMap
+}
+
+func fromStatements(allSmts []blocks.Statement) [][]blocks.Block {
+	arrBlocks := make([][]blocks.Block, len(allSmts))
+	for i := range allSmts {
+		arrBlocks[i] = recursiveParse(*allSmts[i].Block)
+	}
+	return arrBlocks
 }
 
 func fromValues(allValues []blocks.Value) []blocks.Block {
