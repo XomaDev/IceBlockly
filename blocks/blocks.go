@@ -41,6 +41,7 @@ type Mutation struct {
 	XMLName    xml.Name    `xml:"mutation"`
 	ItemCount  int         `xml:"items,attr"`
 	LocalNames []LocalName `xml:"localname"`
+	Args       []Arg       `xml:"arg"`
 }
 
 type LocalName struct {
@@ -56,6 +57,10 @@ type Statement struct {
 type Next struct {
 	XMLName xml.Name  `xml:"next"`
 	Block   *RawBlock `xml:"block"`
+}
+
+type Arg struct {
+	Name string `xml:"name,attr"`
 }
 
 type EmptyBlock struct {

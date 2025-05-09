@@ -268,8 +268,61 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return variableSet(block)
 	case "local_declaration_statement", "local_declaration_expression":
 		return variableSmts(block)
+
+	case "procedures_defnoreturn":
+		return voidProcedure(block)
+	case "procedures_defreturn":
+		return returnProcedure(block)
+	case "procedures_callnoreturn", "procedures_callreturn":
+		return procedureCall(block)
 	default:
 		panic("Unsupported block type: " + block.Type)
+	}
+}
+
+func procedureCall(block blocks.RawBlock) blocks.Block {
+	mutArgsNames := block.Mutation.Args
+	paramNames := make([]string, len(mutArgsNames))
+	for i := range mutArgsNames {
+		paramNames[i] = mutArgsNames[i].Name
+	}
+	procedureName := block.SingleField()
+	args := fromValues(block.Values)
+	return blocks.ProcedureCall{
+		RawBlock:   block,
+		Name:       procedureName,
+		Parameters: paramNames,
+		Args:       args,
+	}
+}
+
+func returnProcedure(block blocks.RawBlock) blocks.Block {
+	procedureName := makeFieldMap(block.Fields)["NAME"]
+	mutArgs := block.Mutation.Args
+	paramNames := make([]string, len(mutArgs))
+	for i := range mutArgs {
+		paramNames[i] = mutArgs[i].Name
+	}
+	return blocks.ReturnProcedure{
+		RawBlock:   block,
+		Name:       procedureName,
+		Parameters: paramNames,
+		Return:     parseBlock(block.SingleValue()),
+	}
+}
+
+func voidProcedure(block blocks.RawBlock) blocks.Block {
+	procedureName := makeFieldMap(block.Fields)["NAME"]
+	mutArgs := block.Mutation.Args
+	paramNames := make([]string, len(mutArgs))
+	for i := range mutArgs {
+		paramNames[i] = mutArgs[i].Name
+	}
+	return blocks.VoidProcedure{
+		RawBlock:   block,
+		Name:       procedureName,
+		Parameters: paramNames,
+		Body:       recursiveParse(*block.Statement.Block),
 	}
 }
 
