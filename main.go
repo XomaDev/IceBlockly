@@ -22,9 +22,13 @@ func main() {
 	}
 	input := strings.Join(inputLines, "\n")
 
-	parsedBlocks := ParseBlockly(input)
-
-	for i := range parsedBlocks {
-		fmt.Println(parsedBlocks[i])
+	for _, group := range ParseBlockly(input) {
+		for _, block := range group {
+			fmt.Println(block)
+			if block.Order() > 0 {
+				fmt.Println()
+			}
+		}
+		fmt.Println()
 	}
 }

@@ -3,12 +3,40 @@ package main
 import (
 	"IceBlockly/blocks"
 	"encoding/xml"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-func ParseBlockly(xmlContent string) []blocks.Block {
-	return allBlocks(parseXml(xmlContent))
+func ParseBlockly(xmlContent string) [][]blocks.Block {
+	return sortAndGroup(allBlocks(parseXml(xmlContent)))
+}
+
+func sortAndGroup(pBlocks []blocks.Block) [][]blocks.Block {
+	if len(pBlocks) == 0 {
+		return [][]blocks.Block{}
+	}
+	sort.Slice(pBlocks, func(i, j int) bool {
+		return pBlocks[i].Order() < pBlocks[j].Order()
+	})
+	var grouped [][]blocks.Block
+	currGroup := []blocks.Block{pBlocks[0]}
+	currOrder := pBlocks[0].Order()
+
+	for i := 0; i < len(pBlocks); i++ {
+		aBlock := pBlocks[i]
+		if aBlock.Order() == currOrder {
+			currGroup = append(currGroup, aBlock)
+		} else {
+			grouped = append(grouped, currGroup)
+			currGroup = []blocks.Block{aBlock}
+			currOrder = aBlock.Order()
+		}
+	}
+	if len(currGroup) > 0 {
+		grouped = append(grouped, currGroup)
+	}
+	return grouped
 }
 
 func parseXml(xmlContent string) []blocks.RawBlock {

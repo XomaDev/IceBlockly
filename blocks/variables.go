@@ -6,6 +6,10 @@ type GlobalVar struct {
 	Value Block
 }
 
+func (v GlobalVar) Order() int {
+	return 0
+}
+
 type VarGet struct {
 	RawBlock
 	Global bool

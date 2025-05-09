@@ -40,6 +40,13 @@ type Event struct {
 	Body       []Block
 }
 
+func (c Event) Order() int {
+	if c.IsGeneric {
+		return 3
+	}
+	return 4
+}
+
 type MethodCall struct {
 	RawBlock
 	Component string

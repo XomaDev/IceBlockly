@@ -8,6 +8,7 @@ type Block interface {
 	GetType() string
 	String() string
 	Continuous() bool
+	Order() int
 }
 
 type XmlRoot struct {
