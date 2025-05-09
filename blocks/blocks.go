@@ -2,7 +2,6 @@ package blocks
 
 import (
 	"encoding/xml"
-	"strings"
 )
 
 type Block interface {
@@ -98,22 +97,6 @@ func (r RawBlock) Continuous() bool {
 	return true
 }
 
-func Pad(block Block) string {
-	return " " + strings.Replace(block.String(), "\n", "\n  ", -1) + "\n"
-}
-
-func PadBody(blocks []Block) string {
-	var builder strings.Builder
-	for _, block := range blocks {
-		builder.WriteString(Pad(block))
-	}
-	return builder.String()
-}
-
-func JoinBlocks(blocks []Block, delimiter string) string {
-	opStrings := make([]string, len(blocks))
-	for i, op := range blocks {
-		opStrings[i] = op.String()
-	}
-	return strings.Join(opStrings, delimiter)
+func (r RawBlock) Order() int {
+	return 100
 }

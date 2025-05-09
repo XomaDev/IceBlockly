@@ -44,11 +44,19 @@ type ListMap struct {
 	To     Block
 }
 
+func (l ListMap) Continuous() bool {
+	return false
+}
+
 type ListFilter struct {
 	RawBlock
 	List   Block
 	AsName string
 	Test   Block
+}
+
+func (l ListFilter) Continuous() bool {
+	return false
 }
 
 type ListReduce struct {
@@ -60,6 +68,10 @@ type ListReduce struct {
 	ApplyExpr    Block
 }
 
+func (l ListReduce) Continuous() bool {
+	return false
+}
+
 type ListSort struct {
 	RawBlock
 	List           Block
@@ -68,11 +80,19 @@ type ListSort struct {
 	TestExpr       Block
 }
 
+func (l ListSort) Continuous() bool {
+	return false
+}
+
 type ListSortKey struct {
 	RawBlock
 	List      Block
 	KeyName   string
 	ApplyExpr Block
+}
+
+func (l ListSortKey) Continuous() bool {
+	return false
 }
 
 type ListTransMin struct {
@@ -83,10 +103,18 @@ type ListTransMin struct {
 	TestExpr       Block
 }
 
+func (l ListTransMin) Continuous() bool {
+	return false
+}
+
 type ListTransMax struct {
 	RawBlock
 	List           Block
 	FirstItemName  string
 	SecondItemName string
 	TestExpr       Block
+}
+
+func (l ListTransMax) Continuous() bool {
+	return false
 }

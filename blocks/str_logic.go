@@ -7,7 +7,11 @@ func (l LogicBoolean) String() string {
 }
 
 func (l LogicNot) String() string {
-	return "!" + l.Value.String()
+	pFormat := "!%v"
+	if !l.Continuous() {
+		pFormat = "!(%v)"
+	}
+	return fmt.Sprintf(pFormat, l.Value)
 }
 
 func (l LogicExpr) String() string {

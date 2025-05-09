@@ -1,13 +1,26 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 )
 
 func main() {
-	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="component_all_component_block"><mutation xmlns="http://www.w3.org/1999/xhtml" component_type="Web"></mutation><field name="COMPONENT_TYPE_SELECTOR">Web</field></block></xml>
-`
+	fmt.Println("Enter XML:")
+
+	// Read multiline input from terminal
+	var inputLines []string
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			break
+		}
+		inputLines = append(inputLines, line)
+	}
+	input := strings.Join(inputLines, "\n")
 
 	parsedBlocks := ParseBlockly(input)
 

@@ -51,7 +51,7 @@ func (c CtrlWhile) String() string {
 }
 
 func (c CtrlChoose) String() string {
-	return fmt.Sprintf("%v ? %v : %v", c.Condition, c.Then, c.Else)
+	return fmt.Sprintf("%v\n%v%v", c.Condition, PadLine("? "+c.Then.String()), PadLine(": "+c.Else.String()))
 }
 
 func (c CtrlDo) String() string {

@@ -43,10 +43,18 @@ type CtrlChoose struct {
 	Else      Block
 }
 
+func (c CtrlChoose) Continuous() bool {
+	return false
+}
+
 type CtrlDo struct {
 	RawBlock
 	Body   []Block
 	Result Block
+}
+
+func (c CtrlDo) Continuous() bool {
+	return false
 }
 
 type CtrlMethod struct {
