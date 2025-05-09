@@ -213,6 +213,35 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return blocks.DictWalkAll{RawBlock: block}
 	case "dictionaries_is_dict":
 		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "isDict"}
+
+	case "color_black":
+		return blocks.Color{RawBlock: block, Name: "Black"}
+	case "color_white":
+		return blocks.Color{RawBlock: block, Name: "White"}
+	case "color_red":
+		return blocks.Color{RawBlock: block, Name: "Red"}
+	case "color_pink":
+		return blocks.Color{RawBlock: block, Name: "Pink"}
+	case "color_orange":
+		return blocks.Color{RawBlock: block, Name: "Orange"}
+	case "color_yellow":
+		return blocks.Color{RawBlock: block, Name: "Yellow"}
+	case "color_green":
+		return blocks.Color{RawBlock: block, Name: "Green"}
+	case "color_cyan":
+		return blocks.Color{RawBlock: block, Name: "Cyan"}
+	case "color_blue":
+		return blocks.Color{RawBlock: block, Name: "Blue"}
+	case "color_magenta":
+		return blocks.Color{RawBlock: block, Name: "Magenta"}
+	case "color_light_gray":
+		return blocks.Color{RawBlock: block, Name: "LightGray"}
+	case "color_dark_gray":
+		return blocks.Color{RawBlock: block, Name: "DarkGray"}
+	case "color_make_color":
+		return blocks.MakeColor{RawBlock: block, List: parseBlock(block.SingleValue())}
+	case "color_split_color":
+		return blocks.SplitColor{RawBlock: block, Color: parseBlock(block.SingleValue())}
 	default:
 		panic("Unsupported block type: " + block.Type)
 	}

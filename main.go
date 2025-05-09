@@ -9,7 +9,7 @@ import (
 
 func main() {
 	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="dictionaries_is_dict"><value name="THING"><block type="dictionaries_create_with"><mutation xmlns="http://www.w3.org/1999/xhtml" items="0"></mutation></block></value></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="color_split_color"><value name="COLOR"><block type="color_black"><field name="COLOR">#000000</field></block></value></block></xml>
 `
 
 	decoder := xml.NewDecoder(strings.NewReader(input))
