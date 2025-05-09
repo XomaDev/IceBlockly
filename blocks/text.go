@@ -39,8 +39,3 @@ type TextObfuscate struct {
 	RawBlock
 	Text string
 }
-
-type TextIsString struct {
-	RawBlock
-	Value Block
-}

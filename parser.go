@@ -110,7 +110,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "obfuscated_text":
 		return blocks.TextObfuscate{RawBlock: block, Text: block.SingleField()}
 	case "text_is_string":
-		return blocks.TextIsString{RawBlock: block, Value: parseBlock(block.SingleValue())}
+		return blocks.TextProperty{RawBlock: block, Property: "isString", Text: parseBlock(block.SingleValue())}
 	case "text_replace_mappings":
 		return textReplaceMap(block)
 
@@ -139,7 +139,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "lists_append_list":
 		return listAppendList(block)
 	case "lists_copy":
-		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "copy"}
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "newList"}
 	case "lists_reverse":
 		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "reverse"}
 	case "lists_to_csv_row":
@@ -149,7 +149,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "lists_sort":
 		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "sort"}
 	case "lists_is_list":
-		return blocks.ListFunction{RawBlock: block, Function: "isList", Args: []blocks.Block{parseBlock(block.SingleValue())}}
+		return blocks.ListProperty{RawBlock: block, List: parseBlock(block.SingleValue()), Property: "isList"}
 	case "lists_from_csv_row":
 		return blocks.ListFunction{RawBlock: block, Function: "listFromCsvRow", Args: []blocks.Block{parseBlock(block.SingleValue())}}
 	case "lists_from_csv_table":
@@ -183,8 +183,135 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return dictPair(block)
 	case "dictionaries_create_with":
 		return blocks.MakeDict{RawBlock: block, Pairs: fromValues(block.Values)}
+	case "dictionaries_lookup":
+		return dictLookup(block)
+	case "dictionaries_set_pair":
+		return dictSetPair(block)
+	case "dictionaries_delete_pair":
+		return dictRemove(block)
+	case "dictionaries_recursive_lookup":
+		return dictLookupPath(block)
+	case "dictionaries_recursive_set":
+		return dictSetPath(block)
+	case "dictionaries_getters":
+		return dictGetters(block)
+	case "dictionaries_is_key_in":
+		return dictHasKey(block)
+	case "dictionaries_length":
+		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "numKeys"}
+	case "dictionaries_alist_to_dict":
+		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "toDict"}
+	case "dictionaries_dict_to_alist":
+		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "toList"}
+	case "dictionaries_copy":
+		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "newDict"}
+	case "dictionaries_combine_dicts":
+		return dictCombine(block)
+	case "dictionaries_walk_tree":
+		return dictWalkTree(block)
+	case "dictionaries_walk_all":
+		return blocks.DictWalkAll{RawBlock: block}
+	case "dictionaries_is_dict":
+		return blocks.DictProperty{RawBlock: block, Dict: parseBlock(block.SingleValue()), Property: "isDict"}
 	default:
 		panic("Unsupported block type: " + block.Type)
+	}
+}
+
+func dictWalkTree(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "walkTree",
+		Args:     []blocks.Block{pVals["PATH"]},
+	}
+}
+
+func dictCombine(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT2"],
+		Method:   "mergeInto",
+		Args:     []blocks.Block{pVals["DICT1"]},
+	}
+}
+
+func dictHasKey(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "hasKey",
+		Args:     []blocks.Block{pVals["KEY"]},
+	}
+}
+
+func dictGetters(block blocks.RawBlock) blocks.Block {
+	var pOperation string
+	switch block.SingleField() {
+	case "KEYS":
+		pOperation = "keys"
+	case "VALUES":
+		pOperation = "values"
+	default:
+		panic("Unknown DictGetters operation: " + block.SingleField())
+	}
+	return blocks.DictProperty{
+		RawBlock: block,
+		Dict:     parseBlock(block.SingleValue()),
+		Property: pOperation,
+	}
+}
+
+func dictSetPath(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "setAtPath",
+		Args:     []blocks.Block{pVals["KEYS"], pVals["VALUE"]},
+	}
+}
+
+func dictLookupPath(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "getAtPath",
+		Args:     []blocks.Block{pVals["KEYS"], pVals["NOTFOUND"]},
+	}
+}
+
+func dictRemove(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "remove",
+		Args:     []blocks.Block{pVals["KEY"]},
+	}
+}
+
+func dictSetPair(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "set",
+		Args:     []blocks.Block{pVals["KEY"], pVals["VALUE"]},
+	}
+}
+
+func dictLookup(block blocks.RawBlock) blocks.Block {
+	pVals := makeValueMap(block.Values)
+	return blocks.DictMethod{
+		RawBlock: block,
+		Dict:     pVals["DICT"],
+		Method:   "get",
+		Args:     []blocks.Block{pVals["KEY"], pVals["NOTFOUND"]},
 	}
 }
 

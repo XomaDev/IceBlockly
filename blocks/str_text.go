@@ -36,7 +36,3 @@ func (t TextSegment) String() string {
 func (t TextObfuscate) String() string {
 	return fmt.Sprintf("obfuscate(\"%v\")", t.Text)
 }
-
-func (t TextIsString) String() string {
-	return fmt.Sprintf("isString(%v)", t.Value)
-}
