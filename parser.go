@@ -324,6 +324,11 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return returnProcedure(block)
 	case "procedures_callnoreturn", "procedures_callreturn":
 		return procedureCall(block)
+
+	case "helpers_assets":
+		return blocks.TextString{RawBlock: block, Text: block.SingleField()}
+	case "helpers_dropdown":
+		return blocks.HelperDropdown{RawBlock: block, Key: block.Mutation.Key, Option: block.SingleField()}
 	default:
 		panic("Unsupported block type: " + block.Type)
 	}

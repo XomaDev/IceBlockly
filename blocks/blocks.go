@@ -42,6 +42,7 @@ type Mutation struct {
 	ItemCount  int         `xml:"items,attr"`
 	LocalNames []LocalName `xml:"localname"`
 	Args       []Arg       `xml:"arg"`
+	Key        string      `xml:"key,attr"`
 }
 
 type LocalName struct {

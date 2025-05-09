@@ -6,7 +6,7 @@ import (
 
 func main() {
 	input := `
-<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="controls_break"></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml"><block xmlns="https://developers.google.com/blockly/xml" type="helpers_dropdown"><mutation xmlns="http://www.w3.org/1999/xhtml" key="ScreenAnimation"></mutation><field name="OPTION">Default</field></block></xml>
 `
 
 	parsedBlocks := ParseBlockly(input)
