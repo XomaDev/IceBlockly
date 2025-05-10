@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 )
 
@@ -22,7 +23,14 @@ func main() {
 	}
 	input := strings.Join(inputLines, "\n")
 
-	for _, group := range ParseBlockly(input) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Panic occurred in ParseBlockly:", r)
+			debug.PrintStack()
+		}
+	}()
+	groups := ParseBlockly(input)
+	for _, group := range groups {
 		for _, block := range group {
 			fmt.Println(block)
 			if block.Order() > 0 {

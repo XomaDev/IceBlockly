@@ -1,13 +1,11 @@
 package blocks
 
-import "fmt"
-
 func (c Color) String() string {
 	return "Color." + c.Name
 }
 
 func (c MakeColor) String() string {
-	return "MakeColor(" + c.List.String() + ")"
+	return sprintf("MakeColor(%v)", c.List)
 }
 
 func (c SplitColor) String() string {
@@ -15,5 +13,5 @@ func (c SplitColor) String() string {
 	if !c.Color.Continuous() {
 		pFormat = "(%v).split"
 	}
-	return fmt.Sprintf(pFormat, c.Color)
+	return sprintf(pFormat, c.Color)
 }

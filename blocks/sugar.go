@@ -1,9 +1,12 @@
 package blocks
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 func Pad(block Block) string {
-	return " " + strings.Replace(block.String(), "\n", "\n  ", -1) + "\n"
+	return " " + strings.Replace(sprintf("%v", block), "\n", "\n  ", -1) + "\n"
 }
 
 func PadLine(line string) string {
@@ -21,7 +24,19 @@ func PadBody(blocks []Block) string {
 func JoinBlocks(blocks []Block, delimiter string) string {
 	opStrings := make([]string, len(blocks))
 	for i, op := range blocks {
-		opStrings[i] = op.String()
+		opStrings[i] = sprintf("%v", op)
 	}
 	return strings.Join(opStrings, delimiter)
+}
+
+func sprintf(f string, args ...interface{}) string {
+	safeArgs := make([]interface{}, len(args))
+	for i, a := range args {
+		if a == nil {
+			safeArgs[i] = "(empty)"
+		} else {
+			safeArgs[i] = a
+		}
+	}
+	return fmt.Sprintf(f, safeArgs...)
 }

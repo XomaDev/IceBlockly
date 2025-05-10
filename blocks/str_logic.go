@@ -1,9 +1,7 @@
 package blocks
 
-import "fmt"
-
 func (l LogicBoolean) String() string {
-	return fmt.Sprintf("%t", l.Value)
+	return sprintf("%t", l.Value)
 }
 
 func (l LogicNot) String() string {
@@ -11,7 +9,7 @@ func (l LogicNot) String() string {
 	if !l.Continuous() {
 		pFormat = "!(%v)"
 	}
-	return fmt.Sprintf(pFormat, l.Value)
+	return sprintf(pFormat, l.Value)
 }
 
 func (l LogicExpr) String() string {

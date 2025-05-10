@@ -23,7 +23,7 @@ func sortAndGroup(pBlocks []blocks.Block) [][]blocks.Block {
 	currGroup := []blocks.Block{pBlocks[0]}
 	currOrder := pBlocks[0].Order()
 
-	for i := 0; i < len(pBlocks); i++ {
+	for i := 1; i < len(pBlocks); i++ {
 		aBlock := pBlocks[i]
 		if aBlock.Order() == currOrder {
 			currGroup = append(currGroup, aBlock)
@@ -133,17 +133,17 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "math_compare":
 		return mathCompare(block)
 	case "math_add":
-		return blocks.MathExpr{Operator: "+", Operands: fromValues(block.Values)}
+		return blocks.MathExpr{Operator: "+", Operands: fromMinVals(block.Values, 2)}
 	case "math_subtract":
-		return blocks.MathExpr{Operator: "-", Operands: fromValues(block.Values)}
+		return blocks.MathExpr{Operator: "-", Operands: fromMinVals(block.Values, 2)}
 	case "math_multiply":
-		return blocks.MathExpr{Operator: "*", Operands: fromValues(block.Values)}
+		return blocks.MathExpr{Operator: "*", Operands: fromMinVals(block.Values, 2)}
 	case "math_division":
-		return blocks.MathExpr{Operator: "/", Operands: fromValues(block.Values)}
+		return blocks.MathExpr{Operator: "/", Operands: fromMinVals(block.Values, 2)}
 	case "math_power":
-		return blocks.MathExpr{Operator: "^", Operands: fromValues(block.Values)}
+		return blocks.MathExpr{Operator: "^", Operands: fromMinVals(block.Values, 2)}
 	case "math_bitwise":
-		return mathBitwise(block, fromValues(block.Values))
+		return mathBitwise(block, fromMinVals(block.Values, 2))
 	case "math_random_int":
 		return mathRandom(block)
 	case "math_random_float":
@@ -153,15 +153,15 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "math_number_radix":
 		return mathRadix(block)
 	case "math_on_list", "math_trig", "math_sin", "math_cos", "math_tan":
-		return blocks.MathFunc{RawBlock: block, Operation: strings.ToLower(block.SingleField()), Operands: fromValues(block.Values)}
+		return blocks.MathFunc{RawBlock: block, Operation: strings.ToLower(block.SingleField()), Operands: fromMinVals(block.Values, 1)}
 	case "math_on_list2":
 		return mathOnList2(block)
 	case "math_mode_of_list":
-		return blocks.MathFunc{RawBlock: block, Operation: "modeOfList", Operands: fromValues(block.Values)}
+		return blocks.MathFunc{RawBlock: block, Operation: "modeOfList", Operands: fromMinVals(block.Values, 1)}
 	case "math_atan2":
-		return blocks.MathFunc{RawBlock: block, Operation: "atan2", Operands: fromValues(block.Values)}
+		return blocks.MathFunc{RawBlock: block, Operation: "atan2", Operands: fromMinVals(block.Values, 1)}
 	case "math_format_as_decimal":
-		return blocks.MathFunc{RawBlock: block, Operation: "formatDecimals", Operands: fromValues(block.Values)}
+		return blocks.MathFunc{RawBlock: block, Operation: "formatDecimals", Operands: fromMinVals(block.Values, 1)}
 	case "math_single":
 		return mathSingle(block)
 	case "math_divide":
@@ -176,7 +176,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "text":
 		return blocks.TextString{RawBlock: block, Text: block.SingleField()}
 	case "text_join":
-		return blocks.TextExpr{RawBlock: block, Operation: "+", Operands: fromValues(block.Values)}
+		return blocks.TextExpr{RawBlock: block, Operation: "+", Operands: fromMinVals(block.Values, 1)}
 	case "text_length":
 		return blocks.TextProperty{RawBlock: block, Property: "len", Text: parseBlock(block.SingleValue())}
 	case "text_isEmpty":
@@ -209,7 +209,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 		return textReplaceMap(block)
 
 	case "lists_create_with":
-		return blocks.MakeList{RawBlock: block, Elements: fromValues(block.Values)}
+		return blocks.MakeList{RawBlock: block, Elements: fromMinVals(block.Values, 1)}
 	case "lists_add_items":
 		return listAddItem(block)
 	case "lists_is_in":
@@ -276,7 +276,7 @@ func parseBlock(block blocks.RawBlock) blocks.Block {
 	case "pair":
 		return dictPair(block)
 	case "dictionaries_create_with":
-		return blocks.MakeDict{RawBlock: block, Pairs: fromValues(block.Values)}
+		return blocks.MakeDict{RawBlock: block, Pairs: fromMinVals(block.Values, 1)}
 	case "dictionaries_lookup":
 		return dictLookup(block)
 	case "dictionaries_set_pair":
@@ -1010,7 +1010,7 @@ func textCompare(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unknown Text Compare operation: " + block.SingleField())
 	}
-	return blocks.TextExpr{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.TextExpr{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 2)}
 }
 
 func logicExpr(block blocks.RawBlock) blocks.Block {
@@ -1030,7 +1030,7 @@ func logicExpr(block blocks.RawBlock) blocks.Block {
 	return blocks.LogicExpr{
 		RawBlock: blocks.RawBlock{},
 		Operator: pOperation,
-		Operands: fromValues(block.Values),
+		Operands: fromMinVals(block.Values, 2),
 	}
 }
 
@@ -1048,7 +1048,7 @@ func mathConvertNumber(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unknown MathConvertNumber type: " + block.SingleField())
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 1)}
 }
 
 func mathIsNumber(block blocks.RawBlock) blocks.Block {
@@ -1065,7 +1065,7 @@ func mathIsNumber(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unknown MathIsNumber type: " + block.SingleField())
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 1)}
 }
 
 func mathAngles(block blocks.RawBlock) blocks.Block {
@@ -1078,7 +1078,7 @@ func mathAngles(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unsupported math angle type: " + block.SingleField())
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 1)}
 }
 
 func mathDivide(block blocks.RawBlock) blocks.Block {
@@ -1093,7 +1093,7 @@ func mathDivide(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unsupported math divide type: " + block.SingleField())
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 2)}
 }
 
 func mathSingle(block blocks.RawBlock) blocks.Block {
@@ -1104,7 +1104,7 @@ func mathSingle(block blocks.RawBlock) blocks.Block {
 	case "ceiling":
 		pOperation = "ceil"
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 1)}
 }
 
 func mathOnList2(block blocks.RawBlock) blocks.Block {
@@ -1125,7 +1125,7 @@ func mathOnList2(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unsupported math_on_list2 operation: " + block.SingleField())
 	}
-	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathFunc{RawBlock: block, Operation: pOperation, Operands: fromMinVals(block.Values, 1)}
 }
 
 func mathRadix(block blocks.RawBlock) blocks.Block {
@@ -1182,7 +1182,7 @@ func mathCompare(block blocks.RawBlock) blocks.Block {
 	default:
 		panic("Unsupported MathCompare operation: " + block.SingleField())
 	}
-	return blocks.MathExpr{RawBlock: block, Operator: pOperation, Operands: fromValues(block.Values)}
+	return blocks.MathExpr{RawBlock: block, Operator: pOperation, Operands: fromMinVals(block.Values, 2)}
 }
 
 func recursiveParse(currBlock blocks.RawBlock) []blocks.Block {
@@ -1223,6 +1223,14 @@ func fromStatements(allSmts []blocks.Statement) [][]blocks.Block {
 
 func fromValues(allValues []blocks.Value) []blocks.Block {
 	arrBlocks := make([]blocks.Block, len(allValues))
+	for i := range allValues {
+		arrBlocks[i] = parseBlock(allValues[i].Block)
+	}
+	return arrBlocks
+}
+
+func fromMinVals(allValues []blocks.Value, minCount int) []blocks.Block {
+	arrBlocks := make([]blocks.Block, max(minCount, len(allValues)))
 	for i := range allValues {
 		arrBlocks[i] = parseBlock(allValues[i].Block)
 	}

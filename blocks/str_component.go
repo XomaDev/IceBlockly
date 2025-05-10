@@ -1,7 +1,6 @@
 package blocks
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -10,11 +9,11 @@ func (c Component) String() string {
 }
 
 func (c PropertySet) String() string {
-	return fmt.Sprintf("%v.%v = %v", c.Component, c.Property, c.Value)
+	return sprintf("%v.%v = %v", c.Component, c.Property, c.Value)
 }
 
 func (c PropertyGet) String() string {
-	return fmt.Sprintf("%v.%v", c.Component, c.Property)
+	return sprintf("%v.%v", c.Component, c.Property)
 }
 
 func (c GenericPropertySet) String() string {
@@ -23,7 +22,7 @@ func (c GenericPropertySet) String() string {
 	if !c.Component.Continuous() {
 		pFormat = "(%v)->%v = %v"
 	}
-	return fmt.Sprintf(pFormat, c.Component, c.Property, c.Value)
+	return sprintf(pFormat, c.Component, c.Property, c.Value)
 }
 
 func (c GenericPropertyGet) String() string {
@@ -32,7 +31,7 @@ func (c GenericPropertyGet) String() string {
 	if !c.Component.Continuous() {
 		pFormat = "(%v)->%v"
 	}
-	return fmt.Sprintf(pFormat, c.Component, c.Property)
+	return sprintf(pFormat, c.Component, c.Property)
 }
 
 func (c Event) String() string {
@@ -40,11 +39,11 @@ func (c Event) String() string {
 	if c.IsGeneric {
 		pFormat = "when any %v.%v(%v) {\n%v}"
 	}
-	return fmt.Sprintf(pFormat, c.Component, c.Event, strings.Join(c.Parameters, ", "), PadBody(c.Body))
+	return sprintf(pFormat, c.Component, c.Event, strings.Join(c.Parameters, ", "), PadBody(c.Body))
 }
 
 func (c MethodCall) String() string {
-	return fmt.Sprintf("%v.%v(%v)", c.Component, c.Method, JoinBlocks(c.Args, ", "))
+	return sprintf("%v.%v(%v)", c.Component, c.Method, JoinBlocks(c.Args, ", "))
 }
 
 func (c GenericMethodCall) String() string {
@@ -52,7 +51,7 @@ func (c GenericMethodCall) String() string {
 	if !c.Component.Continuous() {
 		pFormat = "(%v)->%v(%v)"
 	}
-	return fmt.Sprintf(pFormat, c.Component, c.Method, JoinBlocks(c.Args, ", "))
+	return sprintf(pFormat, c.Component, c.Method, JoinBlocks(c.Args, ", "))
 }
 
 func (c AllComponent) String() string {
