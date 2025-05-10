@@ -9,8 +9,8 @@ func Pad(block Block) string {
 	return " " + strings.Replace(sprintf("%v", block), "\n", "\n  ", -1) + "\n"
 }
 
-func PadLine(line string) string {
-	return " " + strings.Replace(line, "\n", "\n  ", -1) + "\n"
+func PadDirect(code string) string {
+	return " " + strings.Replace(code, "\n", "\n  ", -1)
 }
 
 func PadBody(blocks []Block) string {

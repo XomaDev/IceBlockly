@@ -50,9 +50,8 @@ func (c CtrlWhile) String() string {
 }
 
 func (c CtrlChoose) String() string {
-	return sprintf("%v\n%v%v", c.Condition,
-		PadLine(sprintf("? %v", c.Then)),
-		PadLine(sprintf(": %v", c.Else)))
+	return sprintf("%v%v", c.Condition,
+		PadDirect(sprintf("\n? %v\n: %v", c.Then, c.Else)))
 }
 
 func (c CtrlDo) String() string {

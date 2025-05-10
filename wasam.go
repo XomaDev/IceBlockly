@@ -30,6 +30,7 @@ func xmlToMist(this js.Value, p []js.Value) any {
 		for _, group := range groups {
 			for _, block := range group {
 				builder.WriteString(block.String())
+				builder.WriteString("\n")
 				if block.Order() > 0 {
 					builder.WriteString("\n")
 				}
